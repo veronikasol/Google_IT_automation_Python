@@ -152,3 +152,135 @@ def main():
 
 
 main()
+
+
+"""_________The fourth task of the course 2: "Working with log files" _______ 
+We'll search for the CRON error that failed to start. 
+To do this, we'll use a python script to search log files for a particular type of ERROR log. 
+In this case, we'll search for a CRON error within the fishy.log file that failed to start by 
+narrowing our search to "CRON ERROR Failed to start"."""
+
+# ------ find_error.py -------
+
+#!/usr/bin/env python3
+import sys
+import os
+import re
+
+
+def error_search(log_file):
+    error = input("What is the error? ")
+    returned_errors = []
+    with open(log_file, mode='r',encoding='UTF-8') as file:
+        for log in  file.readlines():
+            error_patterns = ["error"]
+            for i in range(len(error.split(' '))):
+                error_patterns.append(r"{}".format(error.split(' ')[i].lower()))
+            if all(re.search(error_pattern, log.lower()) for error_pattern in error_patterns):
+                returned_errors.append(log)
+        file.close()
+    return returned_errors
+
+  
+def file_output(returned_errors):
+    with open(os.path.expanduser('~') + '/data/errors_found.log', 'w') as file:
+        for error in returned_errors:
+            file.write(error)
+    file.close()
+
+
+if __name__ == "__main__":
+    
+    log_file = sys.argv[1]
+    returned_errors = error_search(log_file)
+    file_output(returned_errors)
+    sys.exit(0)
+
+
+# CRON ERROR Failed to start
+
+
+"""_________The fifth task of the course 2: "Implementing unit testing " _______ 
+
+    Write a simple test to check for basic functionality
+    Write a test to check for edge cases
+    Correct code with a try/except statement
+    There's user_emails.csv in data directory, we have emails.py to test and
+     we will create ~/scripts/emails_test.py
+
+"""
+# ------ emails.py -------
+
+#!/usr/bin/env python3
+import sys
+import csv
+
+def populate_dictionary(filename): 
+    """Populate a dictionary with name/email pairs for easy lookup."""
+    email_dict = {}
+    with open(filename) as csvfile:
+        lines = csv.reader(csvfile, delimiter = ',')
+        for row in lines:
+            name = str(row[0].lower())
+            email_dict[name] = row[1]
+    return email_dict
+
+def find_email(argv):
+    """ Return an email address based on the username given."""
+    # Create the username based on the command line input.
+    try:
+        fullname = str(argv[1] + " " + argv[2])
+        # Preprocess the data
+        email_dict = populate_dictionary('/home/student-03-aa83a0edc859/data/user_emails.csv')
+        # Find and print the email
+         # If email exists, print it
+        if email_dict.get(fullname.lower()):
+            return email_dict.get(fullname.lower())
+        else:
+            return "No email address found"
+    except IndexError:
+        return "Missing parameters"
+
+
+def main():
+    print(find_email(sys.argv))
+
+if __name__ == "__main__":
+    main()
+
+
+# ------ emails_test.py -------
+
+#!/usr/bin/env python3
+import unittest
+from emails import find_email
+
+class TestFile(unittest.TestCase):
+
+    def test_basic(self):
+        testcase = [None, "Bree", "Campbell"]
+        expected = "breee@abc.edu"
+        self.assertEqual(find_email(testcase), expected)
+
+    def test_one_name(self):
+        testcase = [None, "John"]
+        expected = "Missing parameters"
+        self.assertEqual(find_email(testcase), expected)
+
+    def test_two_name(self):
+        testcase = [None, "Roy","Cooper"]
+        expected = "No email address found"
+        self.assertEqual(find_email(testcase), expected)
+
+
+
+if __name__ == '__main__':
+    unittest.main()
+
+
+
+
+
+"""_________The task #6 of the course 2: "Editing files using substrings" _______ 
+
+
