@@ -281,6 +281,99 @@ if __name__ == '__main__':
 
 
 
-"""_________The task #6 of the course 2: "Editing files using substrings" _______ 
+"""_________The task #6 of the course 2: "Editing files using substrings" _______
+
+To comply with the company policy the tsk is to change  username "jane" to "jdoe".
+We have a list of files. Will work in shell 
+grep ' jane ' ../data/list.txt
+grep " jane " ../data/list.txt | cut -d ' ' -f 1  ### delimiter = d: ' ' field -f=1
+
+# Cheching the existance of the file with test
+if test -e ~/data/jane_profile_07272018.doc; then echo "File exists"; else echo "File doesn't exist"; fi
+
+# iteration
+for i in 1 2 3; do echo $i; done
+
+Next we'll write script: 
+This script should catch all "jane" lines and store them in another text file called oldFiles.txt. 
+
+"""
+
+#-----findJane.sh -----
+"""Create new text file, 
+grep files that belong to jane from list.txt
+and put their names into new tex file.
+""" 
+
+!/bin/bash
+>oldFiles.txt
+
+files="$(grep " jane " ../data/list.txt | cut -d ' ' -f 3)"
+for i in $files; do
+        if test -e /home/student-03-06b4b6d6baa2"$i"; then
+        echo "$i" >> oldFiles.txt; fi
+done
+
+
+#----- changeJane.py ----
+"""Takes filename as an argument, 
+renames files listed in this file using subprocess.run and list with mv command as an argument"""
+
+#!/usr/bin/env python3
+import sys
+import subprocess
+f_name = sys.argv[1]
+with open(f_name, 'r') as f:
+    for line in f.readlines():
+        old_name = line.strip()
+        new_name = old_name.replace("jane","jdoe")
+        subprocess.run(['mv','/home/student-03-06b4b6d6baa2'+ old_name,
+            '/home/student-03-06b4b6d6baa2'+ new_name])
+
+
+
+
+
+
+
+
+
+
+"""_________The task #7 of the course 2: "Log analysis using regular expression" _______ 
+
+working in shell:
+>>> import re
+>>> line = "May 27 11:45:40 ubuntu.local ticky: INFO: Created ticket [#1234] (username)"
+>>> re.search(r"ticky: INFO: ([\w ]*) ", line)
+<_sre.SRE_Match object; span=(29, 57), match='ticky: INFO: Created ticket '>
+>>> line = "May 27 11:45:40 ubuntu.local ticky: ERROR: Error creating ticket [#1234] (username)"
+>>> re.search(r"ticky: ERROR: ([\w ]*) ", line)
+<_sre.SRE_Match object; span=(29, 65), match='ticky: ERROR: Error creating ticket '>
+>>> fruit = {"oranges":3, "aples": 5, "bananas": 7, "pears": 2}
+>>> sorted(fruit.items())
+[('aples', 5), ('bananas', 7), ('oranges', 3), ('pears', 2)]
+>>> import operator
+>>> sorted(fruit.items(), key=operator.itemgetter(0))
+[('aples', 5), ('bananas', 7), ('oranges', 3), ('pears', 2)]
+>>> sorted(fruit.items(), key=operator.itemgetter(1))
+[('pears', 2), ('oranges', 3), ('aples', 5), ('bananas', 7)]
+>>> sorted(fruit.items(), key=operator.itemgetter(1), reverse=True)
+[('bananas', 7), ('aples', 5), ('oranges', 3), ('pears', 2)]"""
+
+
+#!/usr/bin/env python3
+import re
+import operator
+
+error_messages = {}
+user_entries = {}
+with open ('syslog.log', 'r') as f:
+        for log in f.readlines():
+                username = re.search(r"\((\w*)\)", line).groups()[0]
+                user_entries[username] = 
+                if re.search(r"ticky: INFO: ([\w ]*) ", log):
+                                             
+                elif re.search(r"ticky: ERROR: ([\w ]*) ", log):
+                        pass
 
 
