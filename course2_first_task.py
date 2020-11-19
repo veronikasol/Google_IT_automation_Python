@@ -326,7 +326,9 @@ f_name = sys.argv[1]
 with open(f_name, 'r') as f:
     for line in f.readlines():
         old_name = line.strip()
+        #replace old name to the new in filename in compliance
         new_name = old_name.replace("jane","jdoe")
+        #rename file with old name to a new one
         subprocess.run(['mv','/home/student-03-06b4b6d6baa2'+ old_name,
             '/home/student-03-06b4b6d6baa2'+ new_name])
 
@@ -339,41 +341,163 @@ with open(f_name, 'r') as f:
 
 
 
-"""_________The task #7 of the course 2: "Log analysis using regular expression" _______ 
-
-working in shell:
->>> import re
->>> line = "May 27 11:45:40 ubuntu.local ticky: INFO: Created ticket [#1234] (username)"
->>> re.search(r"ticky: INFO: ([\w ]*) ", line)
-<_sre.SRE_Match object; span=(29, 57), match='ticky: INFO: Created ticket '>
->>> line = "May 27 11:45:40 ubuntu.local ticky: ERROR: Error creating ticket [#1234] (username)"
->>> re.search(r"ticky: ERROR: ([\w ]*) ", line)
-<_sre.SRE_Match object; span=(29, 65), match='ticky: ERROR: Error creating ticket '>
->>> fruit = {"oranges":3, "aples": 5, "bananas": 7, "pears": 2}
->>> sorted(fruit.items())
-[('aples', 5), ('bananas', 7), ('oranges', 3), ('pears', 2)]
->>> import operator
->>> sorted(fruit.items(), key=operator.itemgetter(0))
-[('aples', 5), ('bananas', 7), ('oranges', 3), ('pears', 2)]
->>> sorted(fruit.items(), key=operator.itemgetter(1))
-[('pears', 2), ('oranges', 3), ('aples', 5), ('bananas', 7)]
->>> sorted(fruit.items(), key=operator.itemgetter(1), reverse=True)
-[('bananas', 7), ('aples', 5), ('oranges', 3), ('pears', 2)]"""
+"""_________The task #7 of the course 2: "Log analysis using regular expression" _______ """
 
 
 #!/usr/bin/env python3
 import re
 import operator
+import csv
 
 error_messages = {}
-user_entries = {}
+per_user = {}
 with open ('syslog.log', 'r') as f:
-        for log in f.readlines():
-                username = re.search(r"\((\w*)\)", line).groups()[0]
-                user_entries[username] = 
-                if re.search(r"ticky: INFO: ([\w ]*) ", log):
-                                             
-                elif re.search(r"ticky: ERROR: ([\w ]*) ", log):
-                        pass
+    for log in f.readlines():
+        username = re.search(r"\(([\w*\. ]*)\)", log)
+        if username is None:
+            continue
+        username = username.groups()[0]
+        #print(username)
+        per_user[username] = per_user.get(username,[0,0])
+        if 'INFO' in log:
+            per_user[username][0] += 1
+        if 'ERROR' in log:
+            per_user[username][1] += 1
+            match = re.search(r"ticky: ERROR ([\w' ]*) ", log)
+            if match is None:
+                continue
+            err = match.groups()[0]
+            #print(err)
+            error_messages[err] = error_messages.get(err, 0) + 1
 
+# отсортируем словари
+# errors - from the most commons 
+errors = sorted(error_messages.items(), key=operator.itemgetter(1), reverse=True)
+# add headers for csv file
+errors.insert(0, ("Error", "Count"))
+# user - by username
+user_list = []
+for k,v in per_user.items():
+    user_list.append((k,v[0],v[1]))
+user = sorted(user_list, key=operator.itemgetter(0))
+# add headers for csv file
+user.insert(0, ("Username", "INFO", "ERROR"))
+
+# save these vlues into error_message.csv and user_statistics.csv.
+with open ('error_message.csv', 'w') as e_f:
+    writer = csv.writer(e_f)
+    writer.writerows(errors)
+with open ('user_statistics.csv', 'w') as s_f:
+    writer = csv.writer(s_f)
+    writer.writerows(user)
+
+
+
+#_____ aux file for converting scv to html   student-00-d1d9712d1a39@linux-instance:~$ cat csv_to_html.py 
+#!/usr/bin/env python3
+import sys
+import csv
+import os
+
+def process_csv(csv_file):
+    """Turn the contents of the CSV file into a list of lists"""
+    print("Processing {}".format(csv_file))
+    with open(csv_file,"r") as datafile:
+        data = list(csv.reader(datafile))
+    return data
+    
+def data_to_html(title, data):
+    """Turns a list of lists into an HTML table"""
+
+    # HTML Headers
+    html_content = """
+<html>
+<head>
+<style>
+table {
+  width: 25%;
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+}
+
+tr:nth-child(odd) {
+  background-color: #dddddd;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+</style>
+</head>
+<body>
+"""
+
+
+    # Add the header part with the given title
+    html_content += "<h2>{}</h2><table>".format(title)
+
+    # Add each row in data as a row in the table
+    # The first line is special and gets treated separately
+    for i, row in enumerate(data):
+        html_content += "<tr>"
+        for column in row:
+            if i == 0:
+                html_content += "<th>{}</th>".format(column)
+            else:
+                html_content += "<td>{}</td>".format(column)
+        html_content += "</tr>"
+
+    html_content += """</tr></table></body></html>"""
+    return html_content
+
+
+def write_html_file(html_string, html_file):
+
+    # Making a note of whether the html file we're writing exists or not
+    if os.path.exists(html_file):
+        print("{} already exists. Overwriting...".format(html_file))
+
+    with open(html_file,'w') as htmlfile:
+        htmlfile.write(html_string)
+    print("Table succesfully written to {}".format(html_file))
+
+def main():
+    """Verifies the arguments and then calls the processing function"""
+    # Check that command-line arguments are included
+    if len(sys.argv) < 3:
+        print("ERROR: Missing command-line argument!")
+        print("Exiting program...")
+        sys.exit(1)
+    
+    # Open the files
+    csv_file = sys.argv[1]
+    html_file = sys.argv[2]
+    
+    # Check that file extensions are included
+    if ".csv" not in csv_file:
+        print('Missing ".csv" file extension from first command-line argument!')
+        print("Exiting program...")
+        sys.exit(1)
+    
+    if ".html" not in html_file:
+        print('Missing ".html" file extension from second command-line argument!')
+        print("Exiting program...")
+        sys.exit(1)
+    
+    # Check that the csv file exists
+    if not os.path.exists(csv_file):
+        print("{} does not exist".format(csv_file))
+        print("Exiting program...")
+        sys.exit(1)
+
+    # Process the data and turn it into an HTML
+    data = process_csv(csv_file)
+    title = os.path.splitext(os.path.basename(csv_file))[0].replace("_", " ").title()
+    html_string = data_to_html(title, data)
+    write_html_file(html_string, html_file)
+
+if __name__ == "__main__":
+    main()
 
